@@ -13,3 +13,12 @@ hex-literal = "1"
 [build-dependencies]
 hex-literal = "1"
 sha2 = "0"
+
+[profile.release]
+strip = true
+lto = true
+opt-level = "z"
+codegen-units = 1
+
+[workspace.metadata.cross.target.armv7-unknown-linux-musleabihf]
+image = "cross-armv7:latest"
