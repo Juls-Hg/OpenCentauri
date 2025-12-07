@@ -12,7 +12,7 @@ If you need any support, feel free to [join the discord](https://discord.gg/t6Cf
 
 If you'd like to support our work, you can do so on [Ko-Fi](https://ko-fi.com/opencentauri) :heart:! If spending money isn't your thing, we also have a [Makerworld page](https://makerworld.com/en/models/1924078-opencentauri-logo#profileId-2064746) where you can throw some boosts towards!
 
-## Features (as of v0.2.0)
+## Features (as of v0.3.0)
 
 - SSH (user: "root", password: "OpenCentauri")
 - Developer features (package manager, prevent booting Klipper, etc)
@@ -22,34 +22,31 @@ If you'd like to support our work, you can do so on [Ko-Fi](https://ko-fi.com/op
     - Note: In OrcaSlicer the default profile still turns on this fan using a M106 P3 command when using PLA.
     - Note: On Elegoo filaments present in OrcaSlicer, the `Exhaust fan` section present on the Cooling tab inside of a Filament profile is respected. If it is enabled, then exhaust fan will turn on at the specified speed.
 - Homing position has been set to the front right instead of the front left
-- The webui (and other integrations like octoeverywhere and home assistant) now accepts modifications during a print (bug introduced in firmware 1.1.29)
+- The webui (and other integrations like octoeverywhere and home assistant) now accepts modifications during a print (bug introduced in firmware 1.1.29. This was fixed in firmware 1.1.42 but has been backported to 1.1.40)
 - The webui's store button has been removed
 - The webui's logo has been replaced with an OpenCentauri logo
-- Allow editing Z offset while the printer is idle
-- Connectivity checks (web traffic issue) have been blocked
-- OTA updates have been blocked
+- The webui's corner radius (white pixels near the corners) has been fixed
+- Z offset can be adjusted while the printer is idle
+- Files can be uploaded while the printer is printing
+- Filament usage is reported via the API 
+- Connectivity checks are blocked (web traffic issue)
+- Official OTA updates have been replaced by OpenCentauri OTA updates
+- Support for usb ethernet adapters
 - New gcode commands: 
-    - M8212 to turn off the chamber light
-    - M8213 to turn on the chamber light
+    - `M8212` to turn off the chamber light
+    - `M8213` to turn on the chamber light
+    - `TEMPERATURE_WAIT SENSOR=box MINIMUM=XX` to wait until a certain temperature has been reached in the chamber
 
 ## Installation
 
-1. Download the centauri_carbon_developer_mode executable and run it on a computer on the same network as your Centauri Carbon. Follow the on screen instructions to enable developer mode.
-    - [Windows build (x64)](https://drive.google.com/file/d/1CROOzsOPZa0S_523WJcTDxCNBs5pvNRz/view?usp=sharing){target="_blank"}
-    - [MacOs build (Universal)](https://drive.google.com/file/d/1N6l0DHo1PaB8TD3hzHAWicqE6ILId-LG/view?usp=sharing){target="_blank"}
-        - To run this executable, open the Terminal in the same folder as the centauri_carbon_developer_mode file, then run the following commands:
-        - `chmod +x centauri_carbon_developer_mode`
-        - `./centauri_carbon_developer_mode`
-    - [Linux build (x64)](https://drive.google.com/file/d/1hPIMx2H8KXDDGo888rHW8m7f7IMhWHur/view?usp=sharing){target="_blank"}
-    - All executables support being ran headless too: `centauri_carbon_developer_mode.exe [install/uninstall] [ip.of.your.cc]`
-2. Insert a fat32-formatted thumbdrive into your pc.
-3. Remove `update.bin` if this is present on your thumbdrive.
-4. Create an `update` folder on the thumbdrive if it does not exist already.
-5. Download `update.swu` from [the latest OC firmware](https://github.com/OpenCentauri/cc-fw-tools/releases/download/v0.2.0/update.swu){target="_blank"}, and copy it into the `update` folder on your thumbdrive.
-6. Eject your thumbdrive from your pc and insert it into your Centauri Carbon.
-7. On your Centauri Carbon, navigate to settings, then to `Check for updates`. There should be a red dot to the right of `Check for updates`.
-8. Click on `new version detected`. Check if the update prompt says the following: `Update local FW`. If it does, click on Update.
-9. Remove the thumbdrive after the machine reboots.
+1. [Download](https://github.com/OpenCentauri/oc-installer/releases/latest/download/oc-installer.zip) the latest OpenCentauri installer release
+2. Insert a fat32-formatted thumbdrive into your pc
+3. Extract the `install_opencentauri` folder from `oc-installer.zip` onto the thumbdrive
+4. Eject your thumbdrive from your pc and insert it into your Centauri Carbon
+5. On your Centauri Carbon, navigate to the files tab, then tap the `Usb Drive` menu, then tap the `install_opencentauri` folder
+6. Touch hold the `IMPORT_ME_DO_NOT_PRINT` file, then tap `Import`
+7. Run `Install OpenCentauri (Online)`
+8. Restart when the install process finished
 
 You should now be greeted by the OpenCentauri splash screen :tada:
 
@@ -57,9 +54,8 @@ This new firmware goes well with [modified machine start and end gcode in OrcaSl
 
 ## Update
 
-OpenCentauri builds already have developer mode enabled by default. You can install a newer version of opencentauri by following the instructions from [Installation](#installation) from step 2 onwards.
+Either accept OTA updates from the device itself, follow the steps again in the [Installation section](#installation)
 
 ## Uninstall
 
-1. Run the centauri_carbon_developer_mode executable again, this time selecting to disable developer mode.
-2. Follow the local firmware update instructions on the [Updates page](../software/updates.md#updating-locally-via-usb).
+Follow the steps again in the [Installation section](#installation). Instead of running `Install OpenCentauri (Online)`, run `Install Official 1.1.40 (Online)`
