@@ -60,7 +60,7 @@ jobs:
       - name: Package
         env:
           PROJECT: decrypt-update
-          PLATFORM: ${{ matrix.os-name }}
+          PLATFORM: ${{ matrix.platform.os-name }}
           TARGET: ${{ matrix.platform.target }}
         run: |
           mkdir package
