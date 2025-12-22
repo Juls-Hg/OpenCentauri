@@ -1,14 +1,13 @@
 name: build-decrypt-update
 on:
+  workflow_dispatch:
   workflow_call:
     secrets:
       DECRYPTION_KEY:
         required: true
-        type: string
       DECRYPTION_IV:
         required: true
-        type: string
-  workflow_dispatch:
+        
   push:
     branches:
       - main
