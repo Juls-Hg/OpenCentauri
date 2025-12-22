@@ -29,7 +29,7 @@ permissions:
 jobs:
   build:
     name: Build
-    uses: ./.github/workflows/build-all.yaml
+    uses: ./.github/workflows/build-all.yml
     secrets:
       DECRYPTION_KEY: ${{ secrets.DECRYPTION_KEY }}
       DECRYPTION_IV: ${{ secrets.DECRYPTION_IV }}

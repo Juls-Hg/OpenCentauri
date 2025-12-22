@@ -1,4 +1,4 @@
-name: Build rust project
+name: --internal-build-rust-project
 
 on:
   workflow_call:
