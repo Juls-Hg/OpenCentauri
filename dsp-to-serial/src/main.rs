@@ -1,5 +1,5 @@
 use std::{
-    fs::remove_file, io::{ErrorKind, Read, Write}, os::unix::fs::symlink, time::{Duration, Instant}
+    fs::remove_file, io::{ErrorKind, Read, Write}, os::unix::fs::symlink, sync::{Arc, Mutex}, thread, time::{Duration, Instant}
 };
 
 use serialport::{SerialPort, TTYPort};
@@ -51,59 +51,74 @@ fn log_tail_thread() {
     }
 }
 
-fn read_dsp(msgbox : &mut MsgboxEndpoint, handler : &mut CommunicationHandler, port: &mut TTYPort) {
-    if !msgbox.msgbox_has_signal()
-    {
-        return;
+fn read_dsp_thread(mut msgbox : MsgboxEndpoint, handler_mutex : Arc<Mutex<CommunicationHandler>>, mut port : TTYPort) {
+    let mut arm_head_read_addr = 0;
+    loop {
+        if !msgbox.msgbox_wait_for_signal()
+        {
+            thread::sleep(Duration::from_millis(1));
+            continue;
+        }
+
+        let now = Instant::now();
+
+        let new_data_to_read = match msgbox
+            .msgbox_read_signal(arm_head_read_addr) {
+                Ok(n) => n,
+                Err(e) => {
+                    println!("Failed to read signal from msgbox: {}", e);
+                    thread::sleep(Duration::from_millis(1));
+                    continue;
+                }
+            };
+
+        arm_head_read_addr = msgbox.msgbox_new_msg_write;
+
+        if !new_data_to_read
+        {
+            println!("Got msgbox message but no data to read?");
+            thread::sleep(Duration::from_millis(1));
+            continue;
+        }
+        let data = {
+            let mut handler = handler_mutex.lock().expect("Failed to aquire communicationhandler mutex (dsp->host)");
+            handler.dsp_mem_read()
+        };
+
+        if data.len() <= 0
+        {
+            println!("No data available to read...");
+            thread::sleep(Duration::from_millis(1));
+            continue;
+        }
+        
+        port.write_all(&data).unwrap(); // TODO: Error handling
+        println!("Read {} bytes from the DSP in {}ms.", data.len(), now.elapsed().as_millis());
     }
+}
 
-    let now = Instant::now();
-
-    let new_data_to_read = match msgbox
-        .msgbox_read_signal(handler.arm_head.read_addr as u16) {
-            Ok(n) => n,
-            Err(e) => {
-                println!("Failed to read signal from msgbox: {}", e);
+fn write_dsp_thread(mut msgbox : MsgboxEndpoint, handler_mutex : Arc<Mutex<CommunicationHandler>>, mut port : TTYPort) {
+    loop {
+        let now = Instant::now();
+        let mut buff = [0u8; 4096];
+        let len = match port.read(&mut buff) {
+            Ok(l) => l,
+            Err(ref e) if e.kind() == ErrorKind::TimedOut => {
                 return;
+            }
+            Err(e) => {
+                println!("Error reading from serial port: {}", e);
+                panic!();
             }
         };
 
-    if !new_data_to_read
-    {
-        println!("Got msgbox message but no data to read?");
-        return;
-    }
-
-    let data = handler.dsp_mem_read();
-
-    if data.len() <= 0
-    {
-        println!("No data available to read...");
-        return;
-    }
-
-    
-    port.write_all(&data).unwrap(); // TODO: Erorr handling
-    println!("Read {} bytes from the DSP in {}ms.", data.len(), now.elapsed().as_millis());
-}
-
-fn write_dsp(msgbox : &mut MsgboxEndpoint, handler : &mut CommunicationHandler, port: &mut TTYPort)
-{
-    let now = Instant::now();
-    let mut buff = [0u8; 4096];
-    let len = match port.read(&mut buff) {
-        Ok(l) => l,
-        Err(ref e) if e.kind() == ErrorKind::TimedOut => {
-            return;
+        {
+            let mut handler = handler_mutex.lock().expect("Failed to aquire communicationhandler mutex (host->dsp)");
+            handler.dsp_mem_write(&mut msgbox, &buff[..len]);
         }
-        Err(e) => {
-            println!("Error reading from serial port: {}", e);
-            panic!();
-        }
-    };
 
-    handler.dsp_mem_write(msgbox, &buff[..len]);
-    println!("Wrote {} bytes to the DSP in {}ms.", len, now.elapsed().as_millis());
+        println!("Wrote {} bytes to the DSP in {}ms.", len, now.elapsed().as_millis());
+    }
 }
 
 fn main() {
@@ -121,11 +136,11 @@ fn main() {
     println!("Done init_no_mmap!");
     handler.wait_dsp_set_init();
     println!("Done DSP init!");
-    let mut msgbox = MsgboxEndpoint::new().unwrap();
+    let msgbox = MsgboxEndpoint::new().unwrap();
     println!("Got msgbox endpoint!");
 
     let (mut master, slave) = TTYPort::pair().expect("Unable to create ptty pair");
-    master.set_timeout(Duration::ZERO).unwrap();
+    master.set_timeout(Duration::MAX).unwrap();
 
     let mut link_path = std::env::temp_dir();
     link_path.push("dsp-serial");
@@ -136,9 +151,11 @@ fn main() {
 
     println!("Created serial port at {:?}", link_path);
 
-    loop {
-        read_dsp(&mut msgbox, &mut handler, &mut master);
-        write_dsp(&mut msgbox, &mut handler, &mut master);
-        std::thread::sleep(Duration::from_millis(2));
-    }
+    let master_clone = master.try_clone_native().expect("Unable to clone ptty master");
+    let msgbox_clone = msgbox.try_clone().expect("Unable to clone msgbox endpoint");
+    let handler_mutex = Arc::new(Mutex::new(handler));
+    let handler_mutex_clone = handler_mutex.clone();
+
+    thread::spawn(move || write_dsp_thread(msgbox_clone, handler_mutex_clone, master_clone));
+    read_dsp_thread(msgbox, handler_mutex, master);
 }

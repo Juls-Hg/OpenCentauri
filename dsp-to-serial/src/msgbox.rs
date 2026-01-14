@@ -37,8 +37,8 @@ impl Default for RpmsgEndpointInfo {
 pub struct MsgboxEndpoint {
     msgbox_fd_ctrl: OwnedFd,
     msgbox_fd_ept: OwnedFd,
-    msgbox_new_msg_read: u16,
-    msgbox_new_msg_write: u16,
+    pub msgbox_new_msg_read: u16,
+    pub msgbox_new_msg_write: u16,
 }
 
 fn wrap_ioctl_negative_invalid(result: Result<i32, Errno>) -> Result<i32, Errno> {
@@ -123,6 +123,15 @@ impl MsgboxEndpoint {
     {
         let poll_fd = PollFd::new(self.msgbox_fd_ept.as_fd(), poll::PollFlags::POLLIN);
         return match poll::poll(&mut [poll_fd], PollTimeout::ZERO) {
+            Ok(num) => num > 0,
+            Err(_) => false,
+        };
+    }
+
+    pub fn msgbox_wait_for_signal(&mut self) -> bool
+    {
+        let poll_fd = PollFd::new(self.msgbox_fd_ept.as_fd(), poll::PollFlags::POLLIN);
+        return match poll::poll(&mut [poll_fd], PollTimeout::NONE) {
             Ok(num) => num > 0,
             Err(_) => false,
         };
