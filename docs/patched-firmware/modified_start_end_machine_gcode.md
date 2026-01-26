@@ -28,11 +28,13 @@ M400 ; wait for buffer to clear
 M220 S100 ;Set the feed speed to 100%
 M221 S100 ;Set the flow rate to 100%
 M104 S140
-M190 S[bed_temperature_initial_layer_single]
 G90
-{if [chamber_temperature]>25}
+{if chamber_temperature[initial_no_support_extruder] >25}
+M140 S110
  TEMPERATURE_WAIT SENSOR=box MINIMUM=[chamber_temperature]
-{endif}; Heatsoak the Chamber for Materials that need it
+M140 S[bed_temperature_initial_layer_single]
+{endif}
+M190 S[bed_temperature_initial_layer_single]
 G28 ;home
 M729 ;Clean Nozzle
 
