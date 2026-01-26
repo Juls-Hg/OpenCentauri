@@ -3,16 +3,18 @@
 ## Features
 
 - Purge line has been moved from the front left to the front middle to reduce cable fatigue
+- Heatsoak the Chamber for engineering-grade Materials (requires patched firmware)
 - Chamber light automatically turns on when starting a print (requires patched firmware)
 - Chamber light automatically turns off when a print finishes (requires patched firmware)
 
 ## Installation
 
-1. Open op OrcaSlicer
+1. Open up OrcaSlicer
 2. Edit your printer profile (Edit icon next to `Elegoo Centauri Carbon 0.4 nozzle`)
 3. Turn on the advanced toggle
 4. Go to Machine G-code
 5. Paste in the following sections
+6. Save as a new profile
 
 Machine start G-code:
 
@@ -28,9 +30,11 @@ M221 S100 ;Set the flow rate to 100%
 M104 S140
 M190 S[bed_temperature_initial_layer_single]
 G90
+{if [chamber_temperature]>25}
+ TEMPERATURE_WAIT SENSOR=box MINIMUM=[chamber_temperature]
+{endif}; Heatsoak the Chamber for Materials that need it
 G28 ;home
 M729 ;Clean Nozzle
-
 
 ;=============turn on fans to prevent PLA jamming=================
 {if filament_type[initial_no_support_extruder]=="PLA"}
