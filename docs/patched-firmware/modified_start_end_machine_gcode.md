@@ -3,7 +3,7 @@
 ## Features
 
 - Purge line has been moved from the front left to the front middle to reduce cable fatigue
-- Heatsoak the Chamber for engineering-grade Materials (requires patched firmware)
+- Preheat the Chamber for engineering-grade Materials (requires patched firmware)
 - Chamber light automatically turns on when starting a print (requires patched firmware)
 - Chamber light automatically turns off when a print finishes (requires patched firmware)
 
