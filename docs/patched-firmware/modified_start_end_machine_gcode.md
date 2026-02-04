@@ -33,7 +33,7 @@ G90
 G28 ; cold Homing
  {if bed_temperature[initial_no_support_extruder] >60}
  M140 S110
- {elseif bed_temperature[initial_no_support_extruder] <60}
+ {elsif bed_temperature[initial_no_support_extruder] <60}
  M140 S60
  {endif}
 G1 Z130 ; Set Buildplate at half height for better heat dissipation
