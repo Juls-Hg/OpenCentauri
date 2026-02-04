@@ -29,12 +29,16 @@ M220 S100 ; Set the feed speed to 100%
 M221 S100 ; Set the flow rate to 100%
 M104 S140
 G90
-{if chamber_temperature[initial_no_support_extruder] >25} ; Heat the Chamber
- G28 ; cold Homing
+{if chamber_temperature[initial_no_support_extruder] >35} ; Heat the Chamber
+G28 ; cold Homing
+ {if bed_temperature[initial_no_support_extruder] >60}
  M140 S110
- G1 Z130 ; Set Buildplate at half height for better heat dissipation
- TEMPERATURE_WAIT SENSOR=box MINIMUM=[chamber_temperature]
- M140 S[bed_temperature_initial_layer_single] ; initiate cooldown for printing
+ {elseif bed_temperature[initial_no_support_extruder] <60}
+ M140 S60
+ {endif}
+G1 Z130 ; Set Buildplate at half height for better heat dissipation
+TEMPERATURE_WAIT SENSOR=box MINIMUM=[chamber_temperature]
+M140 S[bed_temperature_initial_layer_single] ; initiate cooldown for printing
 {endif}
 M190 S[bed_temperature_initial_layer_single]
 G28 ; home
